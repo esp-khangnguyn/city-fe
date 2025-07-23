@@ -1,12 +1,23 @@
-# React + Vite
+### Clone BE Repo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+```bash
+ git clone https://github.com/esp-khangnguyn/city-be.git
+```
 
-Currently, two official plugins are available:
+### Install Package
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+yarn install
+```
 
-## Expanding the ESLint configuration
+### create a file named .env and paste this
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+VITE_API_BASE_URL=http://localhost:3001/api
+```
+
+### Start project
+
+```bash
+yarn dev
+```
