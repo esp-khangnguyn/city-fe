@@ -61,9 +61,11 @@ const CustomTable = () => {
   // Filters state
   const [filters, setFilters] = useState({
     search: "",
-    name: "",
+    first_name: "",
+    last_name: "",
     mother_name: "",
     father_name: "",
+    national_identifier: "",
     birth_date_from: "",
     birth_date_to: "",
     birth_city: "",
@@ -77,6 +79,10 @@ const CustomTable = () => {
   const debouncedName = useDebounce(filters.name, 500);
   const debouncedMotherName = useDebounce(filters.mother_name, 500);
   const debouncedFatherName = useDebounce(filters.father_name, 500);
+  const debouncedNationalIdentifier = useDebounce(
+    filters.national_identifier,
+    500
+  );
 
   const fetchData = async (page = 1, pageSize = 10, currentFilters = {}) => {
     try {
@@ -245,7 +251,8 @@ const CustomTable = () => {
       !debouncedSearch &&
       !debouncedName &&
       !debouncedMotherName &&
-      !debouncedFatherName
+      !debouncedFatherName &&
+      !debouncedNationalIdentifier
     ) {
       setSearchLoading(false);
       return;
@@ -256,7 +263,8 @@ const CustomTable = () => {
       filters.search !== debouncedSearch ||
       filters.name !== debouncedName ||
       filters.mother_name !== debouncedMotherName ||
-      filters.father_name !== debouncedFatherName;
+      filters.father_name !== debouncedFatherName ||
+      filters.national_identifier !== debouncedNationalIdentifier;
 
     setSearchLoading(hasTypingInProgress);
 
@@ -268,6 +276,7 @@ const CustomTable = () => {
         name: debouncedName,
         mother_name: debouncedMotherName,
         father_name: debouncedFatherName,
+        national_identifier: debouncedNationalIdentifier,
         birth_date_from: filters.birth_date_from,
         birth_date_to: filters.birth_date_to,
         birth_city: filters.birth_city,
@@ -285,6 +294,7 @@ const CustomTable = () => {
     debouncedName,
     debouncedMotherName,
     debouncedFatherName,
+    debouncedNationalIdentifier,
   ]);
 
   // Handle search without immediate API call
@@ -299,7 +309,13 @@ const CustomTable = () => {
 
     // For non-debounced filters (dropdowns, etc.), fetch immediately
     if (
-      !["name", "mother_name", "father_name", "search"].includes(filterType)
+      ![
+        "name",
+        "mother_name",
+        "father_name",
+        "search",
+        "national_identifier",
+      ].includes(filterType)
     ) {
       setPagination((prev) => ({ ...prev, current: 1 }));
       fetchData(1, pagination.pageSize, newFilters);
@@ -326,6 +342,7 @@ const CustomTable = () => {
       name: "",
       mother_name: "",
       father_name: "",
+      national_identifier: "",
       birth_date_from: "",
       birth_date_to: "",
       birth_city: "",
@@ -527,12 +544,26 @@ const CustomTable = () => {
               {/* Name Filter */}
               <Col xs={12} sm={6} md={4}>
                 <Input
-                  placeholder="Name"
+                  placeholder="First Name"
                   allowClear
                   prefix={<UserOutlined />}
                   size={windowWidth < 768 ? "middle" : "large"}
-                  value={filters.name}
-                  onChange={(e) => handleFilterChange("name", e.target.value)}
+                  value={filters.first_name}
+                  onChange={(e) =>
+                    handleFilterChange("first_name", e.target.value)
+                  }
+                />
+              </Col>
+              <Col xs={12} sm={6} md={4}>
+                <Input
+                  placeholder="LastName"
+                  allowClear
+                  prefix={<UserOutlined />}
+                  size={windowWidth < 768 ? "middle" : "large"}
+                  value={filters.last_name}
+                  onChange={(e) =>
+                    handleFilterChange("last_name", e.target.value)
+                  }
                 />
               </Col>
 
@@ -560,6 +591,20 @@ const CustomTable = () => {
                   value={filters.father_name}
                   onChange={(e) =>
                     handleFilterChange("father_name", e.target.value)
+                  }
+                />
+              </Col>
+
+              {/* National Identifier Filter */}
+              <Col xs={12} sm={6} md={4}>
+                <Input
+                  placeholder="National ID"
+                  allowClear
+                  prefix={<IdcardOutlined />}
+                  size={windowWidth < 768 ? "middle" : "large"}
+                  value={filters.national_identifier}
+                  onChange={(e) =>
+                    handleFilterChange("national_identifier", e.target.value)
                   }
                 />
               </Col>
@@ -687,13 +732,22 @@ const CustomTable = () => {
                     Father: {debouncedFatherName}
                   </Tag>
                 )}
+                {debouncedNationalIdentifier && !searchLoading && (
+                  <Tag color="green" className="mb-1">
+                    National ID: {debouncedNationalIdentifier}
+                  </Tag>
+                )}
                 {Object.entries(filters).map(([key, value]) => {
                   if (
                     value &&
                     key !== "dateRange" &&
-                    !["search", "name", "mother_name", "father_name"].includes(
-                      key
-                    )
+                    ![
+                      "search",
+                      "name",
+                      "mother_name",
+                      "father_name",
+                      "national_identifier",
+                    ].includes(key)
                   ) {
                     return (
                       <Tag
