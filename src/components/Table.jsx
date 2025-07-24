@@ -24,23 +24,6 @@ import {
 import dayjs from "dayjs";
 import { getCitizens } from "../services/citizenService";
 
-// Custom hook for debouncing values
-const useDebounce = (value, delay) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-};
-
 const CustomTable = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -74,15 +57,15 @@ const CustomTable = () => {
     dateRange: null,
   });
 
-  // Debounced search values (500ms delay)
-  const debouncedSearch = useDebounce(filters.search, 500);
-  const debouncedName = useDebounce(filters.name, 500);
-  const debouncedMotherName = useDebounce(filters.mother_name, 500);
-  const debouncedFatherName = useDebounce(filters.father_name, 500);
-  const debouncedNationalIdentifier = useDebounce(
-    filters.national_identifier,
-    500
-  );
+  // Remove debounced search - we'll use manual search instead
+  // const debouncedSearch = useDebounce(filters.search, 500);
+  // const debouncedName = useDebounce(filters.name, 500);
+  // const debouncedMotherName = useDebounce(filters.mother_name, 500);
+  // const debouncedFatherName = useDebounce(filters.father_name, 500);
+  // const debouncedNationalIdentifier = useDebounce(
+  //   filters.national_identifier,
+  //   500
+  // );
 
   const fetchData = async (page = 1, pageSize = 10, currentFilters = {}) => {
     try {
@@ -108,10 +91,7 @@ const CustomTable = () => {
       // Remove dateRange from params as it's used to set birth_date_from and birth_date_to
       delete params.dateRange;
 
-      console.log("🚀 ~ fetchData ~ params:", params);
-
       const response = await getCitizens(params);
-      console.log("🚀 ~ fetchData ~ response:", response);
 
       // Handle different response structures
       let citizensData = [];
@@ -244,82 +224,19 @@ const CustomTable = () => {
     fetchCities();
   }, []);
 
-  // Effect to handle debounced text search
-  useEffect(() => {
-    // Skip if no debounced values
-    if (
-      !debouncedSearch &&
-      !debouncedName &&
-      !debouncedMotherName &&
-      !debouncedFatherName &&
-      !debouncedNationalIdentifier
-    ) {
+  // Manual search function - called when search button is clicked
+  const handleManualSearch = () => {
+    setSearchLoading(true);
+    setPagination((prev) => ({ ...prev, current: 1 }));
+    fetchData(1, pagination.pageSize, filters).finally(() => {
       setSearchLoading(false);
-      return;
-    }
-
-    // Show search loading when there's a difference between current and debounced
-    const hasTypingInProgress =
-      filters.search !== debouncedSearch ||
-      filters.name !== debouncedName ||
-      filters.mother_name !== debouncedMotherName ||
-      filters.father_name !== debouncedFatherName ||
-      filters.national_identifier !== debouncedNationalIdentifier;
-
-    setSearchLoading(hasTypingInProgress);
-
-    // Only make API call when debounced values are stable
-    if (!hasTypingInProgress) {
-      // Create current filter state with debounced text values
-      const currentFilters = {
-        search: debouncedSearch,
-        name: debouncedName,
-        mother_name: debouncedMotherName,
-        father_name: debouncedFatherName,
-        national_identifier: debouncedNationalIdentifier,
-        birth_date_from: filters.birth_date_from,
-        birth_date_to: filters.birth_date_to,
-        birth_city: filters.birth_city,
-        gender: filters.gender,
-        address_city: filters.address_city,
-        dateRange: filters.dateRange,
-      };
-
-      setPagination((prev) => ({ ...prev, current: 1 }));
-      fetchData(1, pagination.pageSize, currentFilters);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    debouncedSearch,
-    debouncedName,
-    debouncedMotherName,
-    debouncedFatherName,
-    debouncedNationalIdentifier,
-  ]);
-
-  // Handle search without immediate API call
-  const handleSearch = (value) => {
-    setFilters((prev) => ({ ...prev, search: value }));
+    });
   };
 
   // Handle filter change
   const handleFilterChange = (filterType, value) => {
     const newFilters = { ...filters, [filterType]: value };
     setFilters(newFilters);
-
-    // For non-debounced filters (dropdowns, etc.), fetch immediately
-    if (
-      ![
-        "name",
-        "mother_name",
-        "father_name",
-        "search",
-        "national_identifier",
-      ].includes(filterType)
-    ) {
-      setPagination((prev) => ({ ...prev, current: 1 }));
-      fetchData(1, pagination.pageSize, newFilters);
-    }
   };
 
   // Handle date range change
@@ -332,7 +249,6 @@ const CustomTable = () => {
     };
     setFilters(newFilters);
     setPagination((prev) => ({ ...prev, current: 1 })); // Reset to page 1
-    fetchData(1, pagination.pageSize, newFilters);
   };
 
   // Reset filters
@@ -352,7 +268,6 @@ const CustomTable = () => {
     };
     setFilters(resetFilters);
     setPagination((prev) => ({ ...prev, current: 1 })); // Reset to page 1
-    fetchData(1, pagination.pageSize, {});
   };
 
   const columns = [
@@ -539,7 +454,7 @@ const CustomTable = () => {
           </div>
 
           {/* Search and Filters Section */}
-          <div className="mb-6 px-2">
+          <div className="mb-6 px-2 flex flex-col gap-6">
             <Row gutter={[16, 16]}>
               {/* Name Filter */}
               <Col xs={12} sm={6} md={4}>
@@ -686,6 +601,22 @@ const CustomTable = () => {
                   ))}
                 </Select>
               </Col>
+            </Row>
+
+            <Row gutter={[16, 16]}>
+              {/* Search Button */}
+              <Col xs={24} sm={12} md={4}>
+                <Button
+                  type="primary"
+                  icon={<SearchOutlined />}
+                  onClick={handleManualSearch}
+                  loading={searchLoading}
+                  size={windowWidth < 768 ? "middle" : "large"}
+                  className="w-full"
+                >
+                  Search
+                </Button>
+              </Col>
 
               {/* Reset Filters Button */}
               <Col xs={24} sm={12} md={4}>
@@ -711,43 +642,13 @@ const CustomTable = () => {
                     🔍 Searching...
                   </Tag>
                 )}
-                {/* Show current search terms */}
-                {debouncedSearch && !searchLoading && (
-                  <Tag color="green" className="mb-1">
-                    Search: {debouncedSearch}
-                  </Tag>
-                )}
-                {debouncedName && !searchLoading && (
-                  <Tag color="green" className="mb-1">
-                    Name: {debouncedName}
-                  </Tag>
-                )}
-                {debouncedMotherName && !searchLoading && (
-                  <Tag color="green" className="mb-1">
-                    Mother: {debouncedMotherName}
-                  </Tag>
-                )}
-                {debouncedFatherName && !searchLoading && (
-                  <Tag color="green" className="mb-1">
-                    Father: {debouncedFatherName}
-                  </Tag>
-                )}
-                {debouncedNationalIdentifier && !searchLoading && (
-                  <Tag color="green" className="mb-1">
-                    National ID: {debouncedNationalIdentifier}
-                  </Tag>
-                )}
+                {/* Show current search terms - only display values that are actually applied */}
                 {Object.entries(filters).map(([key, value]) => {
                   if (
                     value &&
                     key !== "dateRange" &&
-                    ![
-                      "search",
-                      "name",
-                      "mother_name",
-                      "father_name",
-                      "national_identifier",
-                    ].includes(key)
+                    key !== "birth_date_from" &&
+                    key !== "birth_date_to"
                   ) {
                     return (
                       <Tag
